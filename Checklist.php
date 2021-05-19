@@ -40,9 +40,6 @@ function output_inventory() {
                     '   display: flex;',
                     '   width: 100%;',
                     '}',
-                    '.cols div {',
-                    '   flex-grow: 1;',
-                    '}',
                     '</style>',
                 )
     );
@@ -65,16 +62,14 @@ function output_inventory() {
         echo "<p style=\"font-size: x-large\">";
         echo     $category['name'], "\n";
         echo "</p>\n";
-        echo "<ul>\n";
         foreach ($cat->item as $item) {
             $items = $item->attributes();
-            echo "<li class=\"itemlabel\">\n";
-            echo $items['name'], "\n";
-            echo "</li>\n";
+            $id = $category['name']. "/" . $items['name'];
+            echo "<input class=\"inventoryitem\" type=\"checkbox\" id=\"$id\" onchange=\"checkboxchanged(this)\">";
+            echo "<label for=\"$id\">", $items['name'], "</label><br>\n";
         }
-        echo "</ul>\n";
         echo "</div>\n";
-        if (++$columns == 4) {
+        if (++$columns == 5) {
             echo "</div>\n";
             $columns = 0;
         }
@@ -101,13 +96,16 @@ copy_to_html(array(
 
     'output_inventory',
 
+    '<br><button type="button" onclick="clearallcheckboxes()">Uncheck All</button>',
+
     '<style id="compiled-css" type="text/css">',
 
     '/*   ------------------------------------------------------------- */',
     '.category_list {',
     '    padding: 5px;',
     '    margin: 5px;',
-    '    width: 25%;',
+    '    width: 20%;',
+    '    max-width: 250px;',
     '    border: 2px solid black;',
     '}',
 
@@ -120,6 +118,38 @@ copy_to_html(array(
 
     '/*   ------------------------------------------------------------- */',
     '</style>',
+
+    '<script>',
+
+    'function storagename(id) {',
+    '    return "' . $_REQUEST["name"] . '/" + id;',
+    '}',
+
+    'function checkboxchanged(cb) {',
+    '    if (cb.checked) {',
+    '        localStorage.setItem(storagename(cb.id), "1");',
+    '    } else {',
+    '        localStorage.removeItem(storagename(cb.id));',
+    '    }',
+    '}',
+
+    'function clearallcheckboxes() {',
+    '    var cb = document.getElementsByClassName("inventoryitem");',
+    '    for (var i = 0; i < cb.length; i++) {',
+    '        localStorage.removeItem(storagename(cb[i].id));',
+    '        cb[i].checked = 0;',
+    '    }',
+    '}',
+
+    #initialize state of all checkboxes based on local storage
+    'var cb = document.getElementsByClassName("inventoryitem");',
+    'for (var i = 0; i < cb.length; i++) {',
+    '    if (localStorage.getItem(storagename(cb[i].id))) {',
+    '       cb[i].checked = 1;',
+    '    }',
+    '}',
+
+    '</script>',
 
     '</body>',
     '</html>',
