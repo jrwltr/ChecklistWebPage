@@ -34,47 +34,29 @@ if ($XML === false) {
 #------------------------------------------------------------------------------
 function output_inventory() {
     global $XML;
-    copy_to_html(array(
-                    '<style>',
-                    '.cols {',
-                    '   display: flex;',
-                    '   width: 100%;',
-                    '}',
-                    '</style>',
-                )
-    );
+
     $categories = [];
     foreach ($XML->category as $cat) {
         array_push($categories, array("category"=>$cat, "lines"=>sizeof($cat->item)));
     }
-    function cmp($a, $b) {
-        return $b['lines'] - $a['lines'];
-    }
-    usort($categories, "cmp");
-    $columns = 0;
+    usort($categories, function ($a, $b) {
+                           return $b['lines'] - $a['lines'];
+                       }
+         );
+
     foreach ($categories as $c) {
         $cat = $c['category'];
-        if ($columns == 0) {
-            echo "<div class=\"cols\">\n";
-        }
         $category = $cat->attributes();
         echo "<div class=\"category_list\">\n";
-        echo "<p style=\"font-size: x-large\">";
+        echo "<strong>";
         echo     $category['name'], "\n";
-        echo "</p>\n";
+        echo "</strong><br>\n";
         foreach ($cat->item as $item) {
             $items = $item->attributes();
             $id = $category['name']. "/" . $items['name'];
-            echo "<input class=\"inventoryitem\" type=\"checkbox\" id=\"$id\" onchange=\"checkboxchanged(this)\">";
+            echo "<input class=\"inventoryitem\" type=\"checkbox\" id=\"$id\" onchange=\"CheckboxChanged(this)\">";
             echo "<label for=\"$id\">", $items['name'], "</label><br>\n";
         }
-        echo "</div>\n";
-        if (++$columns == 5) {
-            echo "</div>\n";
-            $columns = 0;
-        }
-    }
-    if ($columns != 0) {
         echo "</div>\n";
     }
 }
@@ -96,7 +78,10 @@ copy_to_html(array(
 
     'output_inventory',
 
-    '<br><button type="button" onclick="clearallcheckboxes()">Uncheck All</button>',
+    # stop floating ...
+    '<div style="clear:both;"></div>',
+
+    '<br><button type="button" onclick="ClearAllCheckboxes()">Uncheck All</button>',
 
     '<style id="compiled-css" type="text/css">',
 
@@ -104,9 +89,11 @@ copy_to_html(array(
     '.category_list {',
     '    padding: 5px;',
     '    margin: 5px;',
-    '    width: 20%;',
-    '    max-width: 250px;',
+    '    width: 250px;',
+    '    height: 300px;',
     '    border: 2px solid black;',
+    '    float: left;',
+    '    overflow: auto;',
     '}',
 
     '/*   ------------------------------------------------------------- */',
@@ -121,32 +108,53 @@ copy_to_html(array(
 
     '<script>',
 
-    'function storagename(id) {',
+    'function StorageName(id) {',
     '    return "' . $_REQUEST["name"] . '/" + id;',
     '}',
 
-    'function checkboxchanged(cb) {',
-    '    if (cb.checked) {',
-    '        localStorage.setItem(storagename(cb.id), "1");',
-    '    } else {',
-    '        localStorage.removeItem(storagename(cb.id));',
+    'function SetBackgroundIfAllChecked(cl) {',
+    '    catcb = cl.getElementsByClassName("inventoryitem");',
+    '    for (var i = 0; i < catcb.length; i++) {',
+    '         if (catcb[i].checked == 0) {',
+    '             cl.style.background = "white";',
+    '             return;',
+    '         }',
     '    }',
+    '    cl.style.background = "lightgray";',
     '}',
 
-    'function clearallcheckboxes() {',
+    'function CheckboxChanged(cb) {',
+    '    if (cb.checked) {',
+    '        localStorage.setItem(StorageName(cb.id), "1");',
+    '    } else {',
+    '        localStorage.removeItem(StorageName(cb.id));',
+    '    }',
+    '    SetBackgroundIfAllChecked(cb.parentElement);',
+    '}',
+
+    'function ClearAllCheckboxes() {',
     '    var cb = document.getElementsByClassName("inventoryitem");',
     '    for (var i = 0; i < cb.length; i++) {',
-    '        localStorage.removeItem(storagename(cb[i].id));',
+    '        localStorage.removeItem(StorageName(cb[i].id));',
     '        cb[i].checked = 0;',
+    '    }',
+    '    for (var i = 0; i < cl.length; i++) {',
+    '        cl[i].style.background = "white";',
     '    }',
     '}',
 
     #initialize state of all checkboxes based on local storage
     'var cb = document.getElementsByClassName("inventoryitem");',
     'for (var i = 0; i < cb.length; i++) {',
-    '    if (localStorage.getItem(storagename(cb[i].id))) {',
+    '    if (localStorage.getItem(StorageName(cb[i].id))) {',
     '       cb[i].checked = 1;',
     '    }',
+    '}',
+
+    #set the background for all categories with all items checked
+    'var cl = document.getElementsByClassName("category_list");',
+    'for (var i = 0; i < cl.length; i++) {',
+    '    SetBackgroundIfAllChecked(cl[i]);',
     '}',
 
     '</script>',
