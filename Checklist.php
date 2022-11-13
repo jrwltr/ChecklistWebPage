@@ -1,7 +1,7 @@
 <?php
 
 #------------------------------------------------------------------------------
-define('DATAFILE_DIR'  , '/home/pi/Share/Data/jrw/Checklists/');
+define('DATAFILE_DIR'  , '/home/jrwltr/Data/jrw/CheckLists/');
 
 #------------------------------------------------------------------------------
 #copy the html to the output
